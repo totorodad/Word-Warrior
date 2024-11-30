@@ -200,11 +200,19 @@ def WW_refill_hand (player):
   global WW_bag 
 
   hand = get_my_hand(player) 
+
+  #Check for return characters (red background characters)
+  for i in range (0,7):
+    if hand[i].islower():
+      WW_Insert_random_tiles_to_bag(WW_bag,hand[i].upper())
+      hand[i] = '#'
+
   print("WW_refill_hand before: ", hand)
   for i in range (0,7):
     if (hand[i] == '#' and len(WW_bag)>0):
       hand[i] = WW_bag.pop()
   print("WW_refill_hand after: ", hand)
+
   set_my_hand(player,hand)
 
 def player_hand_empty(hand):
