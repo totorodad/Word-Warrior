@@ -2,4 +2,4 @@ Word warrior is a tile game for spelling words on a game board.  This game use m
 the dictionary button and the Collins dictionary will be used to check the words you've played on the board. 
 
 Boulder Creek Video Games
--totorodad
+Freeware released under the GPL 3.0
