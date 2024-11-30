@@ -137,12 +137,23 @@ WW_player2 = {"player": "Player 2", "score": 0, "status": "notplaying", "hand": 
 WW_player3 = {"player": "Player 3", "score": 0, "status": "notplaying", "hand": ['#','#','#','#','#','#','#']}
 WW_player4 = {"player": "Player 4", "score": 0, "status": "notplaying", "hand": ['#','#','#','#','#','#','#']}
 
-letter_value = {'A':1, 'B':3,  'C':3, 'D':2, 'E':1, 
+letter_value = {
+                
+                'A':1, 'B':3,  'C':3, 'D':2, 'E':1, 
                 'F':4, 'G':2,  'H':4, 'I':1, 'J':8, 
                 'K':5, 'L':1,  'M':3, 'N':1, 'O':1, 
                 'P':3, 'Q':10, 'R':1, 'S':1, 'T':1, 
                 'U':1, 'V':8,  'W':4, 'X':8, 'Y':4, 
-                'Z':10,' ':0,  '$':0, '#':0} # ' ' = Player 1 blank, '#' = EMPTY, '$' = player 2 blank
+                'Z':10,
+
+                ' ':0,'#':0,
+
+                'a':0, 'b':0, 'c':0, 'd':0, 'e':0, 
+                'f':0, 'g':0, 'h':0, 'i':0, 'j':0, 
+                'k':0, 'l':0, 'm':0, 'n':0, 'o':0, 
+                'p':0, 'q':0, 'r':0, 's':0, 't':0, 
+                'u':0, 'v':0, 'w':0, 'x':0, 'y':0, 
+                'z':0 } # ' ' = Player 1 blank, '#' = EMPTY, lowercase are for 0 value blank tiles
 
 # Total of 101 tiles in a normal set, # = BLANK
 WW_letter_key = {'A':9, 'B':2,  'C':2, 'D':4, 'E':12, 
@@ -187,6 +198,7 @@ GRAY   = (200,200,200)
 WW_font        = pygame.font.Font("assets/fonts/Arial-Unicode-Regular.ttf", 25)
 WW_score_font  = pygame.font.Font("assets/fonts/Arial-Unicode-Regular.ttf", 10)
 WW_value_font  = pygame.font.Font("assets/fonts/Arial-Unicode-Regular.ttf", 10)
+WW_help_text_font  = pygame.font.Font("assets/fonts/Arial-Unicode-Regular.ttf", 15)
 font = pygame.font.Font(None, 30)
 
 blank_space    = pygame.image.load("assets/imgs/blank_space.png").convert_alpha()
@@ -206,6 +218,9 @@ grey_tile      = pygame.image.load("assets/imgs/grey_tile.png").convert_alpha()
 fixed_tile     = pygame.image.load("assets/imgs/fixed_tile.png").convert_alpha()
 myturn_icon    = pygame.image.load("assets/imgs/myturn.png").convert_alpha()
 dictonary_icon = pygame.image.load("assets/imgs/dictionary.png").convert_alpha()
+red_tile       = pygame.image.load("assets/imgs/red_tile.png").convert_alpha()
+help_screen    = pygame.image.load("assets/imgs/help_screen.png").convert_alpha()
+setup_screen   = pygame.image.load("assets/imgs/setup_screen.png").convert_alpha()
 
 dictionary     = "assets/dictionary/Collins Scrabble Words (2019).txt"
 
@@ -218,6 +233,85 @@ def load_words(file_path):
 #Get the words to check spelling
 dict_words = load_words(dictionary)
 
+def roll_blank_tile(pos):
+  global WW_GAMEBOARD_WORDS
+
+  tile_x, tile_y = get_gameboard_tile_coordinate(pos)
+  #print(tile_x,tile_y)
+
+  if (tile_x == -1 and tile_y == -1):
+    return
+
+  #If it's still 'Blank' then roll to 'a'
+  if (WW_GAMEBOARD_WORDS[tile_y][tile_x] == ' ' or WW_GAMEBOARD_WORDS[tile_y][tile_x] == 'z'):
+    WW_GAMEBOARD_WORDS[tile_y][tile_x] = 'a'
+  elif (WW_GAMEBOARD_WORDS[tile_y][tile_x].islower()):
+    WW_GAMEBOARD_WORDS[tile_y][tile_x] = chr(ord(WW_GAMEBOARD_WORDS[tile_y][tile_x])+1)
+
+def get_gameboard_tile_coordinate(pos):
+  #Calculate the x,y coordinate based on mouse position
+  mouse_x = pos[0]
+  mouse_y = pos[1]
+
+  if (mouse_x >= 0 and mouse_x <= (15*40) and mouse_y >= 0 and mouse_y <=(15*40)):
+    tile_x = math.floor(mouse_x/40)
+    tile_y = math.floor(mouse_y/40)
+
+    #Sometimes the math above sets the tile_x or tile_y to 15 at the extreme edge of the game board
+    if (tile_x > 14):
+      tile_x = 14
+    if (tile_y > 14):
+      tile_y = 14
+    return(tile_x,tile_y)
+  else:
+    return(-1,-1)
+
+def player_has_not_put_tile_on_the_gameboard():
+  for x in range (0,15):
+    for y in range (0,15):
+      if (WW_DIRTY_GAMEBOARD[y][x] == '1'):
+        return (False)
+  return (True)
+
+def toggle_hand_tile_for_exchange(pos):
+  global WW_GAMEBOARD_WORDS
+
+  #print("hand_position: ",hand_position," hand: ",hand)
+  #If it's still 'Blank' then roll to 'a'
+  if (player_has_not_put_tile_on_the_gameboard()):
+
+    hand_position = get_hand_tile_coordinate(pos)
+    if (hand_position == -1):
+      return
+
+    hand = get_my_hand()
+
+    if (hand[hand_position].islower()):
+      hand[hand_position] = hand[hand_position].upper()
+    else:
+      hand[hand_position] = hand[hand_position].lower()
+  
+    set_my_hand (hand)
+
+def get_hand_tile_coordinate(pos):
+  x = 0
+  y = HAND_PLAYER_GO_Y_OFFSET
+
+  mouse_x = pos[0]
+  mouse_y = pos[1]
+ 
+  #If tile is picked up from players hand
+  if (mouse_y >= y and mouse_y <= y+40 and mouse_x >= x and mouse_x <= x+(40*7)):
+    hand_position = math.floor(mouse_x/40)
+ 
+    #Sometimes the math above sets the tile_x or tile_y to 15 at the extreme edge of the game board
+    if hand_position > 6:
+      hand_position = 6
+    
+    return (hand_position)
+  else:
+    return(-1)
+
 def is_word(word):
   start_milliseconds = int(time.time() * 1000)
   if word.upper() in dict_words:
@@ -228,7 +322,7 @@ def is_word(word):
     delta_time = int(time.time() * 1000) - start_milliseconds
     #print("word not found in: ", delta_time," ms")
     return False
-8
+
 def test_dictionary_lookup():
   print("AAL is in dictionary? ", is_word ("aal"))
   print("BAAL is in dictionary? ", is_word ("baal"))
@@ -249,7 +343,7 @@ def get_server_ip_address():
   
   while True:
       # Render the background image
-      img = pygame.image.load("assets/imgs/setup_screen.png")
+      img = setup_screen
       screen.blit(img, (0, 0))
 
       # Render the current text.
@@ -330,7 +424,11 @@ def check_spelling():
             font_img = WW_font.render(tile, True, BLACK)
           else:
             font_img = WW_font.render(tile, True, RED)
-          screen.blit(font_img,((j*fixed_tile.get_width())+10,(i*fixed_tile.get_height())+ 0))
+          
+          if (tile.islower()):
+            screen.blit(font_img,((j*fixed_tile.get_width())+13,(i*fixed_tile.get_height())+ 0))
+          else:
+            screen.blit(font_img,((j*fixed_tile.get_width())+10,(i*fixed_tile.get_height())+ 0))
 
 
         if(good_tile):
@@ -625,6 +723,10 @@ def drawbackground(screen):
         img = myturn_icon
         screen.blit(img,((7*40),(15*40)))
 
+      #Draw help screen text
+      help_text_surface = WW_help_text_font.render("PRESS F1 FOR HELP", True, WHITE)
+      screen.blit(help_text_surface, (10*40,15*40))   
+
 def gameboard_update(screen):
   j = 0
   for i in range(len(WW_GAMEBOARD_WORDS)):
@@ -650,7 +752,10 @@ def gameboard_update(screen):
         #Don't render blank tile text
         if (tile != ' '):
           font_img = WW_font.render(tile, True, BLACK)
-          screen.blit(font_img,((j*fixed_tile.get_width())+10,(i*fixed_tile.get_height())+ 0))
+          if (tile.islower()):
+            screen.blit(font_img,((j*fixed_tile.get_width())+13,(i*fixed_tile.get_height())+ 0))
+          else:
+            screen.blit(font_img,((j*fixed_tile.get_width())+10,(i*fixed_tile.get_height())+ 0))
 
         font_value_img = WW_value_font.render(str(letter_value[tile]), True, BLACK)
         screen.blit(font_value_img,((j*fixed_tile.get_width())+25,(i*fixed_tile.get_height())+ 25))
@@ -708,11 +813,17 @@ def hand_mouse_drag_update(screen):
         img = blank_tile3
       elif (WW_Client_player == "Player 4"):
         img = blank_tile4
+
+      #if the tile is going to be thrown back in the bag paint the background red
+      if (tile.islower()):
+        img = red_tile
+
       screen.blit(img,(x,y))
+
 
     #Draw tile letter and value if not a blank tile
     if (tile != ' '):
-      font_img = WW_font.render(tile, True, BLACK)
+      font_img = WW_font.render(tile.upper(), True, BLACK)
       screen.blit(font_img,(x+10,y))
 
     #draw tile letter value
@@ -855,6 +966,14 @@ def show_turn_scores_go_button(screen):
   img = dictonary_icon # let the player know the other player is working on their word.
   screen.blit(img,(15*40,14*40))
 
+def no_tiles_set_for_exchange():
+  #If there is a single character identified for eachange return False
+  hand = get_my_hand()
+  for tile in hand:
+    if tile.islower():
+      return (False)
+  return(True)
+
 def pickup_tile(pos):
   global WW_GAMEBOARD_WORDS
   global WW_DIRTY_GAMEBOARD
@@ -879,7 +998,7 @@ def pickup_tile(pos):
       hand_position = 6
 
     #Don't pick up empty tile
-    if (hand[hand_position] != '#'):
+    if (hand[hand_position] != '#' and no_tiles_set_for_exchange()):
       selected_tile_letter = hand[hand_position]
       hand[hand_position] = '#'
     else:
@@ -898,7 +1017,10 @@ def pickup_tile(pos):
 
     #Check that the tile clicked is not empty or and old tile and it is my turn
     if (WW_GAMEBOARD_WORDS[tile_y][tile_x] != "#" and WW_DIRTY_GAMEBOARD[tile_y][tile_x] != '0' and myturn()):
-      selected_tile_letter = WW_GAMEBOARD_WORDS[tile_y][tile_x]
+      if (WW_GAMEBOARD_WORDS[tile_y][tile_x].islower()): #If picking up an assigned letter blank tile then reset to blank
+        selected_tile_letter = ' '
+      else:
+        selected_tile_letter = WW_GAMEBOARD_WORDS[tile_y][tile_x]
       WW_GAMEBOARD_WORDS[tile_y][tile_x] = '#'
       WW_DIRTY_GAMEBOARD[tile_y][tile_x] = '#'
   
@@ -1808,6 +1930,8 @@ run = True
 gameover = False
 new_game = True 
 
+display_help_screen = False
+
 def register_with_server():
   global start_time, run, gameover, new_game, WW_Client_player
   global WW_player1, WW_player2, WW_player3, WW_player4
@@ -1889,34 +2013,46 @@ while run:
       run = False
 
     if event.type == pygame.MOUSEBUTTONDOWN:
-      pos = pygame.mouse.get_pos()
+      if (event.button == 1): # Detect left button down
+        pos = pygame.mouse.get_pos()
 
-      #Check the played word with the dictionary
-      dictionary_button_check()
+        #Check the played word with the dictionary
+        dictionary_button_check()
 
-      #Check if changing players who control the board
-      if (go_button_click(pos) == True):
-        #Calculate new word score and add it to player's score
-        score_word()
-        #Turn new character dirty bits to locked bits ones to zeros
-        lock_word()
-        player_swap_refill_hand()
-        go_button_clicked = False
-      else:
-        if ismytile(pos) == True:
-          #print("it's my tile")
-          pickup = True
-          pickup_tile(pos)
-         
+        #Check if changing players who control the board
+        if (go_button_click(pos) == True):
+          #Calculate new word score and add it to player's score
+          score_word()
+          #Turn new character dirty bits to locked bits ones to zeros
+          lock_word()
+          player_swap_refill_hand()
+          go_button_clicked = False
+        else:
+          if ismytile(pos) == True:
+            #print("it's my tile")
+            pickup = True
+            pickup_tile(pos)
+
     if event.type == pygame.MOUSEBUTTONUP:
       pos = pygame.mouse.get_pos()
+      if (event.button == 1): # wait for left button up.
+        if (pickup == True):
+          if (out_of_bounds(pos)):
+            drop_tile_hand()
+          else:
+            drop_tile(pos)   
+          pickup = False
 
-      if (pickup == True):
-        if (out_of_bounds(pos)):
-          drop_tile_hand()
-        else:
-          drop_tile(pos)   
-        pickup = False
+      #Detect right mouse click up to roll blanks
+      if (event.button == 3): #Detect right click
+        if (myturn()):
+          roll_blank_tile(pos)
+          toggle_hand_tile_for_exchange(pos)
+
+    #toggle showing the help screen with F1 key
+    if event.type == pygame.KEYUP:
+      if(event.key == pygame.K_F1):
+        display_help_screen = not display_help_screen
 
   #Sync server data ever 1 second
   if ((elapsed_time - start_time) >= 2):
@@ -1966,8 +2102,10 @@ while run:
     new_game = True #Start back over with the IP join game screen
     WW_client_send_game_over_to_server()
 
+  if (display_help_screen):
+    screen.blit(help_screen, (0, 0))
+
   #update display
   pygame.display.flip()
 
-  
 pygame.quit()
