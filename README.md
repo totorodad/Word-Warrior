@@ -13,3 +13,13 @@ No money is made on the use of the video game client.
 Contact totorodad@gmail.com
 
 24-DEC-2024
+
+Unzip with 7-zip gameserver and run.  The default port is 5000.  To change the port use gameserver_3.0 -port xxxx
+
+Unzip with 7-zip the assets folder and the word_warrior client and run the word_warrior executable or python.
+
+If running the python this requires pygame be installed (pip install pygame)
+
+Up to four players can log in and play on the server.  AL the computer player can be invited at any time to play as the n+1 player.  Al will dominate!!!
+
+Jim
